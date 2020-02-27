@@ -85,7 +85,19 @@
             <artifactId>spark-graphx_${scala.binary.version}</artifactId>
             <version>${maprspark.version}</version>
             <scope>provided</scope>
-        </dependency>
+          </dependency>
+
+        <dependency>
+            <groupId>ml.combust.mleap</groupId>
+            <artifactId>mleap-runtime_2.11</artifactId>
+            <version>0.15.0</version>
+          </dependency>
+
+          <dependency>
+    <groupId>ml.combust.mleap</groupId>
+    <artifactId>mleap-spark_2.11</artifactId>
+    <version>0.15.0</version>
+</dependency>
 
 
 

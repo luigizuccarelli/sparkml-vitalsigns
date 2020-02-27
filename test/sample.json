@@ -1,0 +1,84 @@
+{
+  "modelName":"churn-lmz",
+  "format":"ml.combust.mleap.json",
+  "initTimeout":"35000",
+  "tag":0,
+  "frame": {
+    "rows": [
+      [ 117,
+        "No",
+        0,
+        120.0,
+        10.0,
+        20.0,
+        5.0,
+        10.0,
+        2.0,
+        17.5,
+        4.0,
+        20.0,
+        17.50,
+        30.0
+      ]
+    ],
+    "schema": {
+        "fields": [
+            {
+                "type": "integer",
+                "name": "len"
+            },
+            {
+                "type": "string",
+                "name": "intlplan"
+            },
+            {
+                "type": "double",
+                "name": "numvmail"
+            },
+            {
+                "type": "double",
+                "name": "tdmins"
+            },
+            {
+                "type": "double",
+                "name": "tdcalls"
+            },
+            {
+                "type": "double",
+                "name": "temins"
+            },
+            {
+                "type": "double",
+                "name": "tecalls"
+            },
+            {
+                "type": "double",
+                "name": "tnmins"
+            },
+            {
+                "type": "double",
+                "name": "tncalls"
+            },
+            {
+                "type": "double",
+                "name": "tncharge"
+            },
+            {
+                "type": "double",
+                "name": "timins"
+            },
+            {
+                "type": "double",
+                "name": "ticalls"
+            },
+            {
+                "type": "double",
+                "name": "ticharge"
+            },
+            {
+                "type": "double",
+                "name": "numcs"
+            }
+        ]
+    }
+}

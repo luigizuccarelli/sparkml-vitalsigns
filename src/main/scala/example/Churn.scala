@@ -1,5 +1,9 @@
 package example
 
+import ml.combust.bundle.BundleFile
+import ml.combust.mleap.spark.SparkSupport._
+import ml.combust.mleap.runtime.MleapSupport._
+
 import org.apache.spark._
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -15,6 +19,10 @@ import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.ml.tuning.CrossValidator
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.bundle.SparkBundleContext
+import org.apache.spark.ml.mleap.SparkUtil
+import resource._
+
 
 /*
  * Dataset schema
@@ -39,15 +47,12 @@ Customer service calls
 Churn
  */
 
+val workingdir = ""
+val bundledir = ""
+
 object Churn {
 
-  case class Account(state: String, len: Integer, acode: String,
-    intlplan: String, vplan: String, numvmail: Double,
-    tdmins: Double, tdcalls: Double, tdcharge: Double,
-    temins: Double, tecalls: Double, techarge: Double,
-    tnmins: Double, tncalls: Double, tncharge: Double,
-    timins: Double, ticalls: Double, ticharge: Double,
-    numcs: Double, churn: String)
+  case class Account(state: String, len: Integer, acode: String,intlplan: String, vplan: String, numvmail: Double, tdmins: Double, tdcalls: Double, tdcharge: Double, temins: Double, tecalls: Double, techarge: Double, tnmins: Double, tncalls: Double, tncharge: Double, timins: Double, ticalls: Double, ticharge: Double, numcs: Double, churn: String)
   val schema = StructType(Array(
     StructField("state", StringType, true),
     StructField("len", IntegerType, true),
@@ -77,14 +82,12 @@ object Churn {
 
     import spark.implicits._
 
-    val train: Dataset[Account] = spark.read.option("inferSchema", "false")
-      .schema(schema).csv("/user/user01/data/churn-bigml-80.csv").as[Account]
+    val train: Dataset[Account] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/spark/mapr-sparkml-churn/data/churn-bigml-80.csv").as[Account]
     train.take(1)
     train.cache
     println(train.count)
 
-    val test: Dataset[Account] = spark.read.option("inferSchema", "false")
-      .schema(schema).csv("/user/user01/data/churn-bigml-20.csv").as[Account]
+    val test: Dataset[Account] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/spark/mapr-sparkml-churn/data/churn-bigml-20.csv").as[Account]
     test.take(2)
     println(test.count)
     test.cache
@@ -104,44 +107,30 @@ object Churn {
     println(ntrain.count)
     ntrain.show
 
-    val ipindexer = new StringIndexer()
-      .setInputCol("intlplan")
-      .setOutputCol("iplanIndex")
-    val labelindexer = new StringIndexer()
-      .setInputCol("churn")
-      .setOutputCol("label")
+    val ipindexer = new StringIndexer().setInputCol("intlplan").setOutputCol("iplanIndex")
+    val labelindexer = new StringIndexer().setInputCol("churn").setOutputCol("label")
     val featureCols = Array("len", "iplanIndex", "numvmail", "tdmins", "tdcalls", "temins", "tecalls", "tnmins", "tncalls", "timins", "ticalls", "numcs")
 
-    val assembler = new VectorAssembler()
-      .setInputCols(featureCols)
-      .setOutputCol("features")
+    val assembler = new VectorAssembler().setInputCols(featureCols).setOutputCol("features")
 
-    val dTree = new DecisionTreeClassifier().setLabelCol("label")
-      .setFeaturesCol("features")
+    val dTree = new DecisionTreeClassifier().setLabelCol("label").setFeaturesCol("features")
 
     // Chain indexers and tree in a Pipeline.
-    val pipeline = new Pipeline()
-      .setStages(Array(ipindexer, labelindexer, assembler, dTree))
+    val pipeline = new Pipeline().setStages(Array(ipindexer, labelindexer, assembler, dTree))
     // Search through decision tree's maxDepth parameter for best model
     val paramGrid = new ParamGridBuilder().addGrid(dTree.maxDepth, Array(2, 3, 4, 5, 6, 7)).build()
 
-    val evaluator = new BinaryClassificationEvaluator()
-      .setLabelCol("label")
-      .setRawPredictionCol("prediction")
+    val evaluator = new BinaryClassificationEvaluator().setLabelCol("label").setRawPredictionCol("prediction")
 
     // Set up 3-fold cross validation
-    val crossval = new CrossValidator().setEstimator(pipeline)
-      .setEvaluator(evaluator)
-      .setEstimatorParamMaps(paramGrid).setNumFolds(3)
+    val crossval = new CrossValidator().setEstimator(pipeline).setEvaluator(evaluator).setEstimatorParamMaps(paramGrid).setNumFolds(3)
 
     val cvModel = crossval.fit(ntrain)
 
     val bestModel = cvModel.bestModel
     println("The Best Model and Parameters:\n--------------------")
     println(bestModel.asInstanceOf[org.apache.spark.ml.PipelineModel].stages(3))
-    bestModel.asInstanceOf[org.apache.spark.ml.PipelineModel]
-      .stages(3)
-      .extractParamMap
+    bestModel.asInstanceOf[org.apache.spark.ml.PipelineModel].stages(3).extractParamMap
 
     val treeModel = bestModel.asInstanceOf[org.apache.spark.ml.PipelineModel].stages(3).asInstanceOf[DecisionTreeClassificationModel]
     println("Learned classification tree model:\n" + treeModel.toDebugString)
@@ -189,6 +178,14 @@ object Churn {
       """CASE double(round(prediction)) = label WHEN true then 1 ELSE 0 END as equal"""
     )
     equalp.show
+
+      
+    // LMZ Update
+    implicit val context = SparkBundleContext().withDataset(predictions)
+
+    for(bf <- managed(BundleFile("jar:file:/home/lzuccarelli/Data/churn.models-01.zip"))) {
+      cvModel.writeBundle.save(bf)(context).get
+    }
 
   }
 }

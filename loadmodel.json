@@ -1,0 +1,1 @@
+{"modelName":"churn-mleap","uri":"file:/models/churn.models.zip","config":{"memoryTimeout":9000000,"diskTimeout":9000000},"force":false}
