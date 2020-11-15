@@ -1,4 +1,4 @@
-package example
+package main
 
 import ml.combust.bundle.BundleFile
 import ml.combust.mleap.spark.SparkSupport._
@@ -26,97 +26,102 @@ import resource._
 
 /*
  * Dataset schema
-State	
-Account length	
-Area code	
-International plan	
-Voice mail plan	
-Number vmail messages	
-Total day minutes	
-Total day calls	
-Total day charge	
-Total eve minutes	
-Total eve calls	Total eve charge	
-Total night minutes	
-Total night calls	
-Total night charge	
-Total intl minutes	
-Total intl calls	
-Total intl charge	
-Customer service calls	
-Churn
- */
+   Age
+   Height
+   Weight
+   Sex
+   Alertness
+   Supplimentary
+   SPO2
+   RR
+   T
+   SBP
+   HR
+   LevelAlertness
+   LevelSupplimentary
+   LevelSPO2
+   LevelRR
+   LevelT
+   LevelSBP
+   LevelHR
+   Status
+   SendNotification
+   Results
+*/
 
-val workingdir = ""
-val bundledir = ""
+object VitalSigns {
 
-object Churn {
-
-  case class Account(state: String, len: Integer, acode: String,intlplan: String, vplan: String, numvmail: Double, tdmins: Double, tdcalls: Double, tdcharge: Double, temins: Double, tecalls: Double, techarge: Double, tnmins: Double, tncalls: Double, tncharge: Double, timins: Double, ticalls: Double, ticharge: Double, numcs: Double, churn: String)
+  case class Values(age: Integer, height: Double, weight: Double, sex: String, alertness: String, supplimentary: String, spo2: Integer, rr: Integer, t: Double, sbp: Integer,hr: Integer, levelalertness: String, levelsupplimentary: String, levelspo2: String, levelrr: String, levelt: String, levelsbp: String, levelhr: String, status: String, notification: String, results: String)
   val schema = StructType(Array(
-    StructField("state", StringType, true),
-    StructField("len", IntegerType, true),
-    StructField("acode", StringType, true),
-    StructField("intlplan", StringType, true),
-    StructField("vplan", StringType, true),
-    StructField("numvmail", DoubleType, true),
-    StructField("tdmins", DoubleType, true),
-    StructField("tdcalls", DoubleType, true),
-    StructField("tdcharge", DoubleType, true),
-    StructField("temins", DoubleType, true),
-    StructField("tecalls", DoubleType, true),
-    StructField("techarge", DoubleType, true),
-    StructField("tnmins", DoubleType, true),
-    StructField("tncalls", DoubleType, true),
-    StructField("tncharge", DoubleType, true),
-    StructField("timins", DoubleType, true),
-    StructField("ticalls", DoubleType, true),
-    StructField("ticharge", DoubleType, true),
-    StructField("numcs", DoubleType, true),
-    StructField("churn", StringType, true)
+    StructField("age", IntegerType, true),
+    StructField("height", DoubleType, true),
+    StructField("weight", DoubleType, true),
+    StructField("sex", StringType, true),
+    StructField("alertness", StringType, true),
+    StructField("supplimentary", StringType, true),
+    StructField("spo2", IntegerType, true),
+    StructField("rr", IntegerType, true),
+    StructField("t", DoubleType, true),
+    StructField("sbp", IntegerType, true),
+    StructField("hr", IntegerType, true),
+    StructField("levelalertness", StringType, true),
+    StructField("levelsupplimentary", StringType, true),
+    StructField("levelspo2", StringType, true),
+    StructField("levelrr", StringType, true),
+    StructField("levelt", StringType, true),
+    StructField("levelsbp", StringType, true),
+    StructField("levelhr", StringType, true),
+    StructField("status", StringType, true),
+    StructField("notification", StringType, true),
+    StructField("results", StringType, true)
   ))
 
   def main(args: Array[String]) {
 
-    val spark: SparkSession = SparkSession.builder().appName("churn").getOrCreate()
+    val spark: SparkSession = SparkSession.builder().appName("vitalsigns").getOrCreate()
 
     import spark.implicits._
 
-    val train: Dataset[Account] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/spark/mapr-sparkml-churn/data/churn-bigml-80.csv").as[Account]
+    // we split our data 80% for training 20% for testing
+    val train: Dataset[Values] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/sparkml-projects/data/vs-bigml-80.csv").as[Values]
     train.take(1)
     train.cache
     println(train.count)
 
-    val test: Dataset[Account] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/spark/mapr-sparkml-churn/data/churn-bigml-20.csv").as[Account]
+    val test: Dataset[Values] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/sparkml-projects/data/vs-bigml-20.csv").as[Values]
     test.take(2)
     println(test.count)
     test.cache
 
     train.printSchema()
     train.show
-    train.createOrReplaceTempView("account")
-    spark.catalog.cacheTable("account")
+    train.createOrReplaceTempView("values")
+    spark.catalog.cacheTable("values")
 
-    train.groupBy("churn").count.show
-    val fractions = Map("False" -> .17, "True" -> 1.0)
-    //Here we're keeping all instances of the Churn=True class, but downsampling the Churn=False class to a fraction of 388/2278.
-    val strain = train.stat.sampleBy("churn", fractions, 36L)
+    train.groupBy("status").count.show
+    val fractions = Map("normal" -> 1.0, "critical" -> 1.0, "warning" -> 1.0)
+    //Here we're keeping all instances of the Status=critical class, but downsampling the Status=normal class to a fraction.
+    val strain = train.stat.sampleBy("status", fractions, 36L)
 
-    strain.groupBy("churn").count.show
-    val ntrain = strain.drop("state").drop("acode").drop("vplan").drop("tdcharge").drop("techarge")
+    strain.groupBy("status").count.show
+    // The following fields can be dropped. 
+    // 1. They are not used in the NEWS matrix 
+    // 2. Fields that are used supplimentary oxigen and alertness are all the same in this sample (N and A)
+    // 3. The level fields are used fro ststus reporting
+    val ntrain = strain.drop("height").drop("weight").drop("alertness").drop("supplimentary").drop("levelalertness").drop("levelsupplimentary").drop("levelsbp").drop("levelrr").drop("levelspo2").drop("levelt").drop("levelhr").drop("notification").drop("results")
     println(ntrain.count)
     ntrain.show
 
-    val ipindexer = new StringIndexer().setInputCol("intlplan").setOutputCol("iplanIndex")
-    val labelindexer = new StringIndexer().setInputCol("churn").setOutputCol("label")
-    val featureCols = Array("len", "iplanIndex", "numvmail", "tdmins", "tdcalls", "temins", "tecalls", "tnmins", "tncalls", "timins", "ticalls", "numcs")
+    val ipindexer = new StringIndexer().setInputCol("sex").setOutputCol("isex")
+    val labelindexer = new StringIndexer().setInputCol("status").setOutputCol("label")
+    val featureCols = Array("age","isex","sbp", "rr", "spo2", "t", "hr")
 
     val assembler = new VectorAssembler().setInputCols(featureCols).setOutputCol("features")
 
     val dTree = new DecisionTreeClassifier().setLabelCol("label").setFeaturesCol("features")
 
     // Chain indexers and tree in a Pipeline.
-    val pipeline = new Pipeline().setStages(Array(ipindexer, labelindexer, assembler, dTree))
+    val pipeline = new Pipeline().setStages(Array(ipindexer,labelindexer, assembler, dTree))
     // Search through decision tree's maxDepth parameter for best model
     val paramGrid = new ParamGridBuilder().addGrid(dTree.maxDepth, Array(2, 3, 4, 5, 6, 7)).build()
 
@@ -180,13 +185,15 @@ object Churn {
     equalp.show
 
       
-    // LMZ Update
+    // create zip model for scoring   
     implicit val context = SparkBundleContext().withDataset(predictions)
 
-    for(bf <- managed(BundleFile("jar:file:/home/lzuccarelli/Data/churn.models-01.zip"))) {
+    for(bf <- managed(BundleFile("jar:file:/home/lzuccarelli/Data/vitalsign.model.zip"))) {
       cvModel.writeBundle.save(bf)(context).get
     }
 
   }
+
+  // System.exit(0)
 }
 

@@ -1,0 +1,51 @@
+{
+    "rows": [
+      [
+        45,
+       "male", 
+        96,
+        16,
+        36.5,
+        117,
+        111,
+        "normal"
+      ]
+    ],
+    "schema": {
+        "fields": [
+            {
+                "type": "integer",
+                "name": "age"
+            },
+            {
+                "type": "string",
+                "name": "sex"
+            },
+            {
+                "type": "integer",
+                "name": "spo2"
+            },
+            {
+                "type": "integer",
+                "name": "rr"
+            },
+            {
+                "type": "double",
+                "name": "t"
+            },
+            {
+                "type": "integer",
+                "name": "sbp"
+            },
+
+            {
+                "type": "integer",
+                "name": "hr"
+            },
+            {
+                "type": "string",
+                "name": "status"
+            }
+        ]
+    }
+}

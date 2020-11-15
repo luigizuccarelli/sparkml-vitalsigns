@@ -1,1 +1,9 @@
-/target/
+target/
+data/
+*.go
+generate
+rules-engine
+test/
+tmp/
+metastore_db/
+*.log
