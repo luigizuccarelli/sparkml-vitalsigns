@@ -2,6 +2,10 @@
 
 This is a Spark Machine Learning decision tree , written in Scala, 
 
+# Credits
+
+This project was cloned from https://github.com/caroljmcdonald/mapr-sparkml-churn, and modified for use with mleap
+
 ## Download
 Download Spark with Hadoop from https://spark.apache.org/downloads.html
 Select Spark 2.4.5 with Hadoop 2.7 (spark-2.4.5-bin-hadoop2.7.tgz)
