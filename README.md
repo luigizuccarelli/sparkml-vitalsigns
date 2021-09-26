@@ -36,6 +36,7 @@ val bundledir = <your dev bundle directory>
 
 Once we have created the bundle artifact we need to copy it to our RESTful API service
 
+This is OpenShitf specifc, for kubectl there are various helper scripts to achieve this (search for kubectl rsync) 
 ```
 # -v /tmp/models:/models
 oc login url
@@ -44,17 +45,20 @@ oc rsync <bundledir> pod/mleap-xxx:/models
 
 ## Setup
 
-Update the loadmodel.json file (update the name of your model)
+Update the loadmodel-vitalsign.json file (update the name of your model)
 
 Execute the following commands once the file has been copied
 
 ```
 # commands
 curl -v https://<url>/actuator/health
-curl --header "Content-Type: application/json" --request POST --data "@loadmodel.json" https:/url/models
+curl --header "Content-Type: application/json" --request POST --data "@loadmodeli-vitalsign.json" https:/url/models
 curl --header "Content-Type: application/json" --request GET https:/url/models/<modelname>
-curl --header "Content-Type: application/json" --header "timeout: 1000" --request POST --data "@example-leapframe.json" https://url/models/<modelname>/transform
+curl --header "Content-Type: application/json" --header "timeout: 1000" --request POST --data "@lmz-leapframe-vitalsigns.json" https://url/models/<modelname>/transform
 
 ```
 
+## Mleap spring-boot reference
+
+https://github.com/combust/mleap/tree/master/mleap-spring-boot
 

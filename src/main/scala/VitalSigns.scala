@@ -83,6 +83,7 @@ object VitalSigns {
     import spark.implicits._
 
     // we split our data 80% for training 20% for testing
+    // csv path and file names are hard coded, the data sets are not found in the same repo as they are not open sourced 
     val train: Dataset[Values] = spark.read.option("inferSchema", "false").schema(schema).csv("/home/lzuccarelli/Projects/sparkml-projects/data/vs-bigml-80.csv").as[Values]
     train.take(1)
     train.cache
@@ -106,8 +107,8 @@ object VitalSigns {
     strain.groupBy("status").count.show
     // The following fields can be dropped. 
     // 1. They are not used in the NEWS matrix 
-    // 2. Fields that are used supplimentary oxigen and alertness are all the same in this sample (N and A)
-    // 3. The level fields are used fro ststus reporting
+    // 2. Fields that are used supplimentary oxygen and alertness are all the same in this sample (N and A)
+    // 3. The level fields are used for status reporting
     val ntrain = strain.drop("height").drop("weight").drop("alertness").drop("supplimentary").drop("levelalertness").drop("levelsupplimentary").drop("levelsbp").drop("levelrr").drop("levelspo2").drop("levelt").drop("levelhr").drop("notification").drop("results")
     println(ntrain.count)
     ntrain.show
